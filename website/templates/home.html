@@ -4,7 +4,9 @@
     <h1 align="center">Notes</h1>
     <ul class="list-group list-group-flush" id="notes">
         {% for note in all_notes %}
-        <li class="list-group-item">{{ note.data }}
+        <li class="list-group-item">
+            <strong>{{ note.user.first_name }}:</strong> {{ note.data }}
+
             {% if note.user_id == current_user.id %}
             <button type="button" class="close" onclick="deleteNote({{ note.id }})">
                 <span aria-hidden = "true">&times;</span>
