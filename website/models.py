@@ -13,4 +13,4 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120))
     first_name = db.Column(db.String(120))
-    notes = db.relationship('Sketch')
+    notes = db.relationship('Sketch', backref='user')
