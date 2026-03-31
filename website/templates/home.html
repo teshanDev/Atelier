@@ -28,6 +28,11 @@
             <span aria-hidden="true">&times;</span>
         </button>
         {% endif %}
+        <br/>
+        <span id="likes-count-{{note.id}}">{{ note.likes|length }}</span>
+        <button type="button" class="btn btn-sm btn-outline-primary" onclick="like({{note.id}})">
+            Like
+        </button>
     </li>
     {% endfor %}
 </ul>

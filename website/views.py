@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, flash, jsonify, current_a
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from . import db
-from .models import Sketch
+from .models import Sketch, Like
 
 views = Blueprint('views', __name__)
 
@@ -66,3 +66,22 @@ def delete_note():
             db.session.commit()
 
     return jsonify({})  # Return an empty response to tell JS we are done
+
+@views.route('/like-sketch/<sketch_id>', methods=['POST'])
+@login_required
+def like(sketch_id):
+    sketch = Sketch.query.get_or_404(sketch_id)
+    # Check if this user already liked this specific sketch
+    like = Like.query.filter_by(user_id=current_user.id, sketch_id=sketch_id).first()
+
+    if not sketch:
+        return jsonify({'error': 'Sketch does not exist.'}, 400)
+    elif like:
+        db.session.delete(like)
+        db.session.commit()
+    else:
+        new_like = Like(user_id=current_user.id, sketch_id=sketch_id)
+        db.session.add(new_like)
+        db.session.commit()
+
+    return jsonify({"likes": len(sketch.likes), "liked": current_user.id in map(lambda x: x.user_id, sketch.likes)})
