@@ -6,34 +6,48 @@
 
 <form method="POST" enctype="multipart/form-data">
     <label for="sketch_image">Upload a Sketch:</label>
-    <input type="file" name="sketch_image" id="sketch_image" class="form-control" accept="image/*">
+    <input type="file" name="sketch_image" id="sketch_image" class="form-control" accept="image/*" onchange="previewImage(event)">
+    <img id="output-preview" style="max-width: 200px; display: none; margin-top: 10px; border-radius: 5px;"/>
     <br/>
     <div align="center">
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-primary" id="upload-btn" onclick="showLoading()">
+            <span id="btn-text">Submit</span>
+            <span id="btn-spinner" class="spinner-border spinner-border-sm" style="display: none;"></span>
+        </button>
+
+        <script>
+        function showLoading() {
+            document.getElementById('btn-text').style.display = 'none';
+            document.getElementById('btn-spinner').style.display = 'inline-block';
+            document.getElementById('upload-btn').disabled = true;
+            document.querySelector('form').submit(); // Manually trigger submit because we disabled the button
+        }
+        </script>
     </div>
 </form>
 
 <hr>
 
 <ul class="list-group" id="notes">
-    {% for note in all_notes %}
-    <li class="list-group-item">
-        <strong>{{ note.user.first_name }}</strong> shared: <br>
-
-        <img src="{{ url_for('static', filename='uploads/' + note.image_path) }}"
-             style="max-width: 300px; border-radius: 10px; margin-top: 10px;">
-
-        {% if note.user_id == current_user.id %}
-        <button type="button" class="close" onclick="deleteNote({{ note.id }})">
-            <span aria-hidden="true">&times;</span>
-        </button>
-        {% endif %}
-        <br/>
-        <span id="likes-count-{{note.id}}">{{ note.likes|length }}</span>
-        <button type="button" class="btn btn-sm btn-outline-primary" onclick="like({{note.id}})">
-            Like
-        </button>
-    </li>
-    {% endfor %}
+    <div class="row" id="sketches-grid">
+        {% for note in all_notes %}
+        <div class="col-md-4 col-sm-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <img src="{{ url_for('static', filename='uploads/' + note.image_path) }}" class="card-img-top" alt="Sketch">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="{% if current_user.id in note.likes|map(attribute='user_id') %}fas{% else %}far{% endif %} fa-heart text-danger"
+                            onclick="like({{note.id}})" style="cursor: pointer;"></i>
+                        <span id="likes-count-{{note.id}}">{{ note.likes|length }}</span>
+                    </div>
+                    <small class="text-muted">By {{ note.user.first_name }}</small>
+                    {% if note.user_id == current_user.id %}
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteNote({{ note.id }})">&times;</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </ul>
 {% endblock %}
