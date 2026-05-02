@@ -8,14 +8,14 @@ function deleteNote(noteId) {
 }
 
 function like(sketchId) {
-    const likeIcon = document.getElementById(`like-icon-${sketchId}`);
-    const likeCount = document.getElementById(`likes-count-${sketchId}`);
+    const likeIcon = document.getElementById(`like-icon-${sketchId}`); // Backticks!
+    const likeCount = document.getElementById(`likes-count-${sketchId}`); // Backticks!
 
     fetch(`/like-sketch/${sketchId}`, { method: "POST" })
         .then((res) => res.json())
         .then((data) => {
             likeCount.innerHTML = data["likes"];
-
+            // Toggle classes
             if (data["liked"] === true) {
                 likeIcon.classList.remove("far");
                 likeIcon.classList.add("fas");
@@ -23,18 +23,7 @@ function like(sketchId) {
                 likeIcon.classList.remove("fas");
                 likeIcon.classList.add("far");
             }
-        })
-        .catch((e) => console.error("Error liking sketch:", e));
-}
-
-function previewImage(event) {
-    const reader = new FileReader();
-    reader.onload = function() {
-        const output = document.getElementById('output-preview');
-        output.src = reader.result;
-        output.style.display = 'block';
-    };
-    reader.readAsDataURL(event.target.files[0]);
+        });
 }
 
 setTimeout(function() {
@@ -45,3 +34,13 @@ setTimeout(function() {
         setTimeout(()=> alert.remove(), 500);
     });
 }, 3000);
+
+function autoSubmit() {
+    const form = document.getElementById('upload-form');
+    const fileInput = document.getElementById('sketch_image');
+
+    if (fileInput.files.length > 0) {
+        // You could add a loading spinner here if you want!
+        form.submit();
+    }
+}
