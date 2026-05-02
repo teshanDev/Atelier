@@ -2,52 +2,121 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<h1 align="center">Sketches</h1>
+<style>
+    /* 1. THE GAP FIX: We give the cards a margin instead of relying on column padding */
+    .grid-card-wrapper {
+        padding: 12px; /* This creates a 24px total gap between cards */
+    }
 
-<form method="POST" enctype="multipart/form-data">
-    <label for="sketch_image">Upload a Sketch:</label>
-    <input type="file" name="sketch_image" id="sketch_image" class="form-control" accept="image/*" onchange="previewImage(event)">
-    <img id="output-preview" style="max-width: 200px; display: none; margin-top: 10px; border-radius: 5px;"/>
-    <br/>
-    <div align="center">
-        <button type="submit" class="btn btn-primary" id="upload-btn" onclick="showLoading()">
-            <span id="btn-text">Submit</span>
-            <span id="btn-spinner" class="spinner-border spinner-border-sm" style="display: none;"></span>
-        </button>
+    /* 2. The 9:16 Instagram Story Ratio */
+    .story-ratio {
+        width: 100%;
+        aspect-ratio: 9 / 16;
+        object-fit: cover;
+        border-radius: 15px 15px 0 0;
+    }
 
-        <script>
-        function showLoading() {
-            document.getElementById('btn-text').style.display = 'none';
-            document.getElementById('btn-spinner').style.display = 'inline-block';
-            document.getElementById('upload-btn').disabled = true;
-            document.querySelector('form').submit(); // Manually trigger submit because we disabled the button
-        }
-        </script>
-    </div>
-</form>
+    /* 3. Card Styling */
+    .card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        background-color: #fff;
+        height: 100%;
+    }
 
-<hr>
+    .card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
 
-<ul class="list-group" id="notes">
-    <div class="row" id="sketches-grid">
-        {% for note in all_notes %}
-        <div class="col-md-4 col-sm-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <img src="{{ url_for('static', filename='uploads/' + note.image_path) }}" class="card-img-top" alt="Sketch">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <i class="{% if current_user.id in note.likes|map(attribute='user_id') %}fas{% else %}far{% endif %} fa-heart text-danger"
-                            onclick="like({{note.id}})" style="cursor: pointer;"></i>
-                        <span id="likes-count-{{note.id}}">{{ note.likes|length }}</span>
+    /* 4. The "Upload" Card Styling */
+    .upload-card {
+        border: 2px dashed #cbd5e0 !important;
+        background-color: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 9 / 16;
+    }
+
+    .plus-icon-wrapper {
+        width: 65px;
+        height: 65px;
+        background-color: #edf2f7;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        margin-bottom: 15px;
+    }
+
+    .upload-card:hover .plus-icon-wrapper {
+        background-color: #007bff;
+        color: white;
+        transform: rotate(90deg);
+    }
+</style>
+
+<div class="container mt-5">
+    <h1 class="text-center font-weight-bold mb-5">Gallery</h1>
+
+    <!-- No special classes needed on row for this method -->
+    <div class="row">
+
+        <!-- Upload Card -->
+        <div class="col-lg-3 col-md-4 col-sm-6">
+            <div class="grid-card-wrapper">
+                <div class="card shadow-sm upload-card"
+                     onclick="document.getElementById('sketch_image').click()"
+                     style="cursor: pointer;">
+                    <div class="text-center text-muted">
+                        <div class="plus-icon-wrapper mx-auto">
+                            <i class="fas fa-plus fa-2x"></i>
+                        </div>
+                        <h5 class="font-weight-bold text-dark">New Sketch</h5>
+                        <p class="small">Tap to share</p>
+                        <form id="upload-form" method="POST" enctype="multipart/form-data" style="display: none;">
+                            <input type="file" name="sketch_image" id="sketch_image" accept="image/*" onchange="autoSubmit()">
+                        </form>
                     </div>
-                    <small class="text-muted">By {{ note.user.first_name }}</small>
-                    {% if note.user_id == current_user.id %}
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteNote({{ note.id }})">&times;</button>
-                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Gallery Sketches -->
+        {% for note in all_notes %}
+        <div class="col-lg-3 col-md-4 col-sm-6">
+            <div class="grid-card-wrapper">
+                <div class="card shadow-sm">
+                    <img src="{{ url_for('static', filename='uploads/' + note.image_path) }}"
+                         class="story-ratio"
+                         alt="Sketch">
+                    <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="{% if current_user.id in note.likes|map(attribute='user_id') %}fas{% else %}far{% endif %} fa-heart text-danger mr-2"
+                               onclick="like({{note.id}})" style="cursor: pointer;"></i>
+                            <span>{{ note.likes|length }}</span>
+                        </div>
+                        {% if note.user_id == current_user.id %}
+                        <i class="fas fa-trash-alt text-muted" onclick="deleteNote({{ note.id }})" style="cursor: pointer;"></i>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
-</ul>
+</div>
+
+<script>
+    function autoSubmit() {
+        const fileInput = document.getElementById('sketch_image');
+        if (fileInput.files.length > 0) {
+            document.getElementById('upload-form').submit();
+        }
+    }
+</script>
 {% endblock %}
