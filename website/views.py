@@ -40,6 +40,14 @@ def home():
     return render_template("home.html", user=current_user, all_notes=all_sketches)
 
 
+
+@views.route('/myProfile', methods=['GET', 'POST'])
+@login_required
+def myProfile():
+    sketches = Sketch.query.filter_by(user_id=current_user.id).all()
+    return render_template("myProfile.html", user=current_user, current_user_sketches=sketches)
+
+
 @views.route('/delete-note', methods=['POST'])
 def delete_note():
     # 1. Get the data sent from JavaScript
